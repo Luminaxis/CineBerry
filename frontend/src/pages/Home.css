@@ -1,0 +1,183 @@
+/* Home.css */
+.card {
+    max-width: 500px;
+    height: max-content;
+    margin: 25px auto;
+    border: 1px solid rgb(173, 173, 173);
+    border-radius: 5px;
+    
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+}
+
+.card-header > h5 {
+    margin: 0;
+    padding-left: 10px;
+    font-size: 16px;
+}
+
+.card-pic img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.card-image img,
+.card-image video {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.card-content {
+    padding: 10px;
+    text-align: left;
+}
+
+.card-content p {
+    margin: 0;
+    line-height: 1.6; /* Adjust line height as needed */
+}
+
+.add-comment {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.add-comment input {
+    flex: 1;
+    margin: 0;
+    outline: none;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.comment {
+    border: none;
+    background-color: #ea9617;
+    padding: 8px 17px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.material-symbols-outlined-red {
+    color: red;
+    font-variation-settings:
+        'FILL' 1,
+        'wght' 700,
+        'GRAD' 0,
+        'opsz' 48;
+}
+
+.material-symbols-outlined {
+    cursor: pointer;
+}
+
+.showComment {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: rgba(16, 13, 13, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 400px; /* Adjust max width for large screens */
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.container .details {
+    text-align: left;
+    margin: 10px 0;
+}
+
+.comment-section {
+    margin-top: 10px;
+    border-top: 1px solid #ccc;
+    padding-top: 10px;
+}
+
+.comment-section .comm {
+    margin-bottom: 10px;
+}
+
+.close-comment {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: white;
+    cursor: pointer;
+}
+
+@media screen and (min-width: 601px) {
+    .container {
+        max-width: 580px; /* Adjust max width for large screens when showing all comments */
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .container {
+        max-width: 100%;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .add-comment input {
+        border-radius: 0;
+    }
+
+    .postPic {
+        display: none; /* Hide postPic on smaller screens */
+    }
+}
+
+#cine-berry-logo{
+    width: 320px;
+    height: 200px;
+}
+
+@media screen and (min-width: 800px) {
+    #cine-berry-logo{
+        display: none;
+    }
+
+}
+
+
+#see-post-clip {
+    margin-top: 15px;
+    cursor: pointer;
+    font-weight: 500;
+    padding: 11px 28px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    border: none;
+    color: #fff;
+    background: #90EE90;
+    transition: all 0.25s ease;
+}
+
+#see-post-clip:hover {
+    box-shadow: 0 10px 20px -10px rgba(255, 62, 78, 0.6);
+    transform: translateY(-5px);
+    background: #71ef71;
+}
+
