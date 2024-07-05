@@ -31,7 +31,14 @@ app.use(createPostRoutes);
 app.use(userRoutes);
 app.use(clipRoutes); // Use clip routes
 
-mongoose.connect(process.env.MONGODB_URL, { useNewUrlParser: true, useUnifiedTopology: true });
+const mongoURI = process.env.MONGODB_URL;
+
+if (!mongoURI) {
+    console.error("MongoDB URI is not defined in environment variables.");
+    process.exit(1); // Exit process with failure
+}
+
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
 
 mongoose.connection.on('connected', () => {
     console.log('Successfully connected to MongoDB');
