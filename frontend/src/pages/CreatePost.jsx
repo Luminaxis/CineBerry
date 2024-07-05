@@ -26,7 +26,7 @@ export default function Createpost() {
           "Authorization": "Bearer " + localStorage.getItem("jwt"),
         },
         body: JSON.stringify({
-          description: body,
+          [isClip ? "description" : "body"]: body,
           [isClip ? "video" : "pic"]: url,
         }),
       })
@@ -54,28 +54,32 @@ export default function Createpost() {
       notifyA("Please select a file");
       return;
     }
-  
+    if (!body.trim()) {
+      notifyA("Please fill all the fields");
+      return;
+    }
+
     const data = new FormData();
     data.append("file", media);
     data.append("upload_preset", "cine-berry");
     data.append("cloud_name", "dtqdz4osh");
-  
+
     const uploadUrl = isClip
       ? "https://api.cloudinary.com/v1_1/dtqdz4osh/video/upload"
       : "https://api.cloudinary.com/v1_1/dtqdz4osh/image/upload";
-  
+
     setIsUploading(true);
-  
+
     const xhr = new XMLHttpRequest();
     xhr.open("POST", uploadUrl, true);
-  
+
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {
         const percentComplete = (event.loaded / event.total) * 100;
         setUploadProgress(percentComplete);
       }
     };
-  
+
     xhr.onload = () => {
       if (xhr.status === 200) {
         const response = JSON.parse(xhr.responseText);
@@ -86,16 +90,16 @@ export default function Createpost() {
       setIsUploading(false);
       setUploadProgress(0);
     };
-  
+
     xhr.onerror = () => {
       notifyA("Failed to upload file");
       setIsUploading(false);
       setUploadProgress(0);
     };
-  
+
     xhr.send(data);
   };
-  
+
   const loadfile = (event) => {
     var output = document.getElementById("output");
     const file = event.target.files[0];

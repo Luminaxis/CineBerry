@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import PostDetail from "../components/PostDetails";
 import "../components/UserProfile.css";
 import ProfilePic from "../components/ProfilePic";
+import { toast } from 'react-toastify';
 
 export default function Profile() {
   const picLink = "https://cdn-icons-png.flaticon.com/128/3177/3177440.png";
@@ -11,6 +12,8 @@ export default function Profile() {
   const [selectedPost, setSelectedPost] = useState(null);
   const [user, setUser] = useState({});
   const [changePic, setChangePic] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const toggleDetails = (post) => {
     setSelectedPost(post);
@@ -87,14 +90,92 @@ export default function Profile() {
       });
   }, []);
 
+  const notifyA = (msg) => toast.error(msg);
+  const notifyB = (msg) => toast.success(msg);
+
+  const handleProfilePicUpload = (file) => {
+    const data = new FormData();
+    data.append("file", file);
+    data.append("upload_preset", "cine-berry");
+    data.append("cloud_name", "dtqdz4osh");
+
+    setIsUploading(true);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://api.cloudinary.com/v1_1/dtqdz4osh/image/upload", true);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = (event.loaded / event.total) * 100;
+        setUploadProgress(percentComplete);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        const response = JSON.parse(xhr.responseText);
+        updateProfilePic(response.url);
+      } else {
+        notifyA("Failed to upload file");
+      }
+      setIsUploading(false);
+      setUploadProgress(0);
+    };
+
+    xhr.onerror = () => {
+      notifyA("Failed to upload file");
+      setIsUploading(false);
+      setUploadProgress(0);
+    };
+
+    xhr.send(data);
+  };
+
+  const updateProfilePic = (url) => {
+    fetch('/uploadProfilePic', {
+      method: "put",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + localStorage.getItem("jwt"),
+      },
+      body: JSON.stringify({
+        pic: url,
+      }),
+    })
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.error) {
+          notifyA(result.error);
+        } else {
+          notifyB("Profile picture updated successfully");
+          setUser((prevState) => {
+            return {
+              ...prevState,
+              Photo: result.pic,
+            };
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error updating profile picture:", err);
+      });
+  };
+
   return (
     <div className="profile">
       <div className="profile-frame">
         <div className="profile-pic">
           <img
-            onClick={changeProfile}
+            onClick={() => document.getElementById('profilePicInput').click()}
             src={user.Photo ? user.Photo : picLink}
             alt="Profile"
+          />
+          <input
+            type="file"
+            id="profilePicInput"
+            style={{ display: 'none' }}
+            accept="image/*"
+            onChange={(e) => handleProfilePicUpload(e.target.files[0])}
           />
         </div>
         <div className="profile-data">
@@ -107,6 +188,13 @@ export default function Profile() {
           </div>
         </div>
       </div>
+      {isUploading && (
+        <div className="progress-bar">
+          <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }}>
+            {Math.round(uploadProgress)}%
+          </div>
+        </div>
+      )}
       <hr style={{ width: "90%", opacity: "0.8", margin: "25px auto" }} />
       <div className="gallery">
         {posts.map((post) => (
