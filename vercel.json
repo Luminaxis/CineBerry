@@ -8,6 +8,14 @@
   ],
   "routes": [
     {
+      "src": "/(favicon.ico|logo192.png|logo512.png)",
+      "dest": "/build/$1"
+    },
+    {
+      "src": "/(index.html|manifest.json)",
+      "dest": "/build/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/build/$1"
     }
