@@ -117,7 +117,6 @@
     position: static;
   }
 }
-
 @media screen and (max-width: 402px) {
   .profile-frame {
     flex-direction: column;
@@ -139,9 +138,17 @@
     margin: 0 10px; /* Ensure padding around profile info items */
   }
 
+  .profile-data {
+    text-align: center; /* Center align text */
+  }
+
   .followBtn {
     width: 70%; /* Full width */
     padding: 10px 0; /* Adjust padding for full width button */
     margin: 10px 0; /* Margin to space out from profile info */
+  }
+
+  .profile-data h1 {
+    display: block;
   }
 }

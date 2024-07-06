@@ -91,27 +91,19 @@ export default function UserProfile() {
           <img src={user.Photo ? user.Photo : picLink} alt="" />
         </div>
         <div className="profile-data">
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+          <h1>{user.name}</h1>
+          <button
+            className="followBtn"
+            onClick={() => {
+              if (isFollow) {
+                unfollowUser(user._id);
+              } else {
+                followUser(user._id);
+              }
             }}
           >
-            <h1>{user.name}</h1>
-            <button
-              className="followBtn"
-              onClick={() => {
-                if (isFollow) {
-                  unfollowUser(user._id);
-                } else {
-                  followUser(user._id);
-                }
-              }}
-            >
-              {isFollow ? "Unfollow" : "Follow"}
-            </button>
-          </div>
+            {isFollow ? "Unfollow" : "Follow"}
+          </button>
           <div className="profile-info user-profile-info" style={{ display: "flex" }}>
             <p>{posts.length} posts</p>
             <p>{clips.length} clips</p>
