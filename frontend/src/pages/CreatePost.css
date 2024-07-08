@@ -81,7 +81,7 @@
     background-color: #f3f3f3;
     border-radius: 10px; /* increased border radius for a softer look */
     overflow: hidden;
-    margin-top: 20px; /* increased margin-top for better spacing */
+    margin-top: 5px; /* increased margin-top for better spacing */
   }
   
   .progress-bar-fill {
