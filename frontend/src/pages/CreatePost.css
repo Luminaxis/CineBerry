@@ -74,7 +74,7 @@
     margin-top: 10px; /* increased margin-top for better spacing */
     padding: 10px; /* added padding for better output size */
     font-size: 16px; /* added font-size for better readability */
-    max-height: 600px;
+    max-height: 500px;
   }
   
   .progress-bar {
