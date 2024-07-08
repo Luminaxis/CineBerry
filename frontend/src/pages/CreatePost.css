@@ -63,7 +63,7 @@
     width: 100%; /* changed width to 100% for better responsiveness */
     border: none;
     outline: none;
-    padding: 10px; /* added padding for better textarea size */
+    padding: 8px; /* added padding for better textarea size */
     font-size: 16px; /* added font-size for better readability */
   }
   
@@ -81,7 +81,7 @@
     background-color: #f3f3f3;
     border-radius: 10px; /* increased border radius for a softer look */
     overflow: hidden;
-    margin-top: 5px; /* increased margin-top for better spacing */
+    margin-bottom: 5px; /* increased margin-top for better spacing */
   }
   
   .progress-bar-fill {
