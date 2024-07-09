@@ -192,7 +192,6 @@ export default function MyFollowingPost() {
     }
   };
 
-
   useEffect(() => {
     window.addEventListener("scroll", handleScroll);
     return () => {
@@ -255,6 +254,7 @@ export default function MyFollowingPost() {
                     src={content.video}
                     id={content._id}
                     onClick={() => handleVideoPlay(content)}
+                    loading="lazy" // Lazy loading attribute
                   />
                 </div>
               )}

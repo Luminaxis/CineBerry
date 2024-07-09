@@ -152,3 +152,8 @@
     display: block;
   }
 }
+
+#back-arrow{
+  display: flex;
+  justify-content: flex-start;
+}

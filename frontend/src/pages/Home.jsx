@@ -5,15 +5,18 @@ import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import logo from "../assets/CineBerry-logo.png";
 
+const picLink =
+  "https://cdn-icons-png.flaticon.com/128/3177/3177440.png";
+
 export default function Home() {
-  const picLink =
-    "https://cdn-icons-png.flaticon.com/128/3177/3177440.png";
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [comment, setComment] = useState("");
   const [show, setShow] = useState(false);
-  const [item, setItem] = useState([]);
+  const [item, setItem] = useState(null);
   const [isPostView, setIsPostView] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   let limit = 10;
   let skip = 0;
 
@@ -30,16 +33,46 @@ export default function Home() {
     const token = localStorage.getItem("jwt");
     if (!token) {
       navigate("./signup");
+    } else {
+      fetchData();
     }
-    fetchContent();
-
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
   }, [isPostView]);
 
-  const fetchContent = () => {
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (data.length === 0) return;
+    const options = {
+      root: null,
+      rootMargin: "0px",
+      threshold: 0.1,
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const video = entry.target;
+          video.play().catch((err) => console.log("Failed to play:", err));
+          video.muted = false;
+        } else {
+          const video = entry.target;
+          video.pause();
+          video.muted = true;
+        }
+      });
+    }, options);
+
+    const videos = document.querySelectorAll("video");
+    videos.forEach((video) => observer.observe(video));
+
+    return () => observer.disconnect();
+  }, [data]);
+
+  const fetchData = () => {
+    setLoading(true);
     if (isPostView) {
       fetchPosts();
     } else {
@@ -55,9 +88,14 @@ export default function Home() {
     })
       .then((res) => res.json())
       .then((result) => {
-        setData((data) => [...data, ...result]);
+        setData((prevData) => [...prevData, ...result]);
+        setLoading(false);
+        setHasMore(result.length > 0);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        setLoading(false);
+        console.error("Error fetching posts:", err);
+      });
   };
 
   const fetchClips = () => {
@@ -68,51 +106,26 @@ export default function Home() {
     })
       .then((res) => res.json())
       .then((result) => {
-        setData((data) => [...data, ...result]);
+        setData((prevData) => [...prevData, ...result]);
+        setLoading(false);
+        setHasMore(result.length > 0);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        setLoading(false);
+        console.error("Error fetching clips:", err);
+      });
   };
 
   const handleScroll = () => {
-    const videos = document.getElementsByTagName("video");
-    const videoArray = Array.from(videos);
-
-    // Find the video that is currently in view
-    let currentVideoInView = null;
-    for (let video of videoArray) {
-      const rect = video.getBoundingClientRect();
-      // Adjust the condition to check if video top is within viewport
-      if (rect.top >= 0 && rect.top <= window.innerHeight) {
-        currentVideoInView = video;
-        break;
-      }
-    }
-
-    if (currentVideoInView) {
-      const currentVideoId = currentVideoInView.id;
-      if (currentVideoId !== currentVideoIdRef.current) {
-        // Pause the previous video with audio
-        if (currentVideoRef.current && isAudioPlayingRef.current) {
-          currentVideoRef.current.pause();
-          currentVideoRef.current.removeAttribute("muted");
-          isAudioPlayingRef.current = false;
-        }
-
-        // Play the current video with audio
-        currentVideoInView.play();
-        currentVideoInView.muted = false; // Unmute for audio
-        isAudioPlayingRef.current = true;
-
-        // Update refs
-        currentVideoRef.current = currentVideoInView;
-        currentVideoIdRef.current = currentVideoId;
-      }
+    if (!loading && hasMore && window.innerHeight + window.scrollY >= document.body.scrollHeight - 20) {
+      skip += limit;
+      fetchData();
     }
   };
 
-  const toggleComment = (posts) => {
+  const toggleComment = (content) => {
     setShow(!show);
-    setItem(posts);
+    setItem(content);
   };
 
   const likeContent = (id) => {
@@ -128,11 +141,12 @@ export default function Home() {
     })
       .then((res) => res.json())
       .then((result) => {
-        const newData = data.map((content) =>
-          content._id === result._id ? result : content
+        const updatedData = data.map((item) =>
+          item._id === result._id ? result : item
         );
-        setData(newData);
-      });
+        setData(updatedData);
+      })
+      .catch((err) => notifyA("Failed to like content"));
   };
 
   const unlikeContent = (id) => {
@@ -148,11 +162,12 @@ export default function Home() {
     })
       .then((res) => res.json())
       .then((result) => {
-        const newData = data.map((content) =>
-          content._id === result._id ? result : content
+        const updatedData = data.map((item) =>
+          item._id === result._id ? result : item
         );
-        setData(newData);
-      });
+        setData(updatedData);
+      })
+      .catch((err) => notifyA("Failed to unlike content"));
   };
 
   const makeComment = (text, id) => {
@@ -169,13 +184,30 @@ export default function Home() {
     })
       .then((res) => res.json())
       .then((result) => {
-        const newData = data.map((content) =>
-          content._id === result._id ? result : content
+        const updatedData = data.map((item) =>
+          item._id === result._id ? result : item
         );
-        setData(newData);
+        setData(updatedData);
         setComment("");
-        notifyB("Comment posted");
-      });
+        notifyB("Comment posted successfully");
+      })
+      .catch((err) => notifyA("Failed to post comment"));
+  };
+
+  const handleVideoClick = (content) => {
+    if (currentVideoRef.current) {
+      currentVideoRef.current.pause();
+      currentVideoRef.current.removeAttribute("muted");
+      isAudioPlayingRef.current = false;
+    }
+    const video = document.getElementById(content._id);
+    if (video) {
+      video.play().catch((err) => console.log("Failed to play:", err));
+      video.muted = false;
+      currentVideoRef.current = video;
+      currentVideoIdRef.current = content._id;
+      isAudioPlayingRef.current = true;
+    }
   };
 
   return (
@@ -184,21 +216,19 @@ export default function Home() {
         <img
           id="cine-berry-logo"
           src={logo}
-          alt=""
-          onClick={() => {
-            navigate("/");
-          }}
+          alt="CineBerry Logo"
+          onClick={() => navigate("/")}
         />
       </div>
 
       <div className="home">
         <button
+          id="see-post-clip"
           onClick={() => {
             setIsPostView(!isPostView);
             setData([]);
             skip = 0;
           }}
-          id="see-post-clip"
         >
           {isPostView ? "See Clips" : "See Posts"}
         </button>
@@ -208,45 +238,33 @@ export default function Home() {
             <div className="card-header">
               <div className="card-pic">
                 <img
-                  src={content.postedBy.Photo ? content.postedBy.Photo : picLink}
-                  alt=""
+                  src={content.postedBy?.Photo || picLink}
+                  alt="User Profile"
                 />
               </div>
               <h5>
-                <Link to={`/profile/${content.postedBy._id}`}>
-                  {content.postedBy.name}
+                <Link to={`/profile/${content.postedBy?._id}`}>
+                  {content.postedBy?.name}
                 </Link>
               </h5>
             </div>
             <div className="card-image">
               {isPostView ? (
-                <img src={content.photo} alt="" />
+                <img src={content.photo} alt="Post" />
               ) : (
-                <>
+                <div className="video-placeholder">
                   <video
-                    src={content.video}
                     id={content._id}
-                    onClick={() => {
-                      if (currentVideoRef.current) {
-                        currentVideoRef.current.pause();
-                        currentVideoRef.current.removeAttribute("muted");
-                        isAudioPlayingRef.current = false;
-                      }
-                      const video = document.getElementById(content._id);
-                      video.play();
-                      video.muted = false;
-                      currentVideoRef.current = video;
-                      currentVideoIdRef.current = content._id;
-                      isAudioPlayingRef.current = true;
-                    }}
+                    src={content.video}
+                    muted
+                    playsInline
+                    onClick={() => handleVideoClick(content)}
                   />
-                </>
+                </div>
               )}
             </div>
             <div className="card-content">
-              {content.likes.includes(
-                JSON.parse(localStorage.getItem("user"))._id
-              ) ? (
+              {content.likes.includes(JSON.parse(localStorage.getItem("user"))._id) ? (
                 <span
                   className="material-symbols-outlined material-symbols-outlined-red"
                   onClick={() => unlikeContent(content._id)}
@@ -294,7 +312,7 @@ export default function Home() {
           </div>
         ))}
 
-        {show && (
+        {show && item && (
           <div className="showComment">
             <div className="container">
               <div className="details">
@@ -313,9 +331,7 @@ export default function Home() {
                 </div>
                 <div className="card-content">
                   <p>{item.likes.length} Likes</p>
-                  <p>
-                    {isPostView ? item.body : item.description}
-                  </p>
+                  <p>{isPostView ? item.body : item.description}</p>
                 </div>
                 <div className="add-comment">
                   <span className="material-symbols-outlined">mood</span>
@@ -337,14 +353,16 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div
-              className="close-comment"
-              onClick={() => toggleComment()}
-            >
-              <span className="material-symbols-outlined material-symbols-outlined-comment">close</span>
+            <div className="close-comment" onClick={() => setShow(false)}>
+              <span className="material-symbols-outlined material-symbols-outlined-comment">
+                close
+              </span>
             </div>
           </div>
         )}
+
+        {loading && <p>Loading...</p>}
+        {!hasMore && <p>No more {isPostView ? "posts" : "clips"} to load.</p>}
       </div>
     </>
   );

@@ -3,6 +3,8 @@ import PostDetail from "../components/PostDetails";
 import "../components/UserProfile.css";
 import ProfilePic from "../components/ProfilePic";
 import { toast } from 'react-toastify';
+import { Link } from "react-router-dom";
+import { TiArrowBack } from "react-icons/ti";
 
 export default function Profile() {
   const picLink = "https://cdn-icons-png.flaticon.com/128/3177/3177440.png";
@@ -163,6 +165,12 @@ export default function Profile() {
 
   return (
     <div className="profile">
+      <div id="back-arrow">
+      <Link to="/" className="back-link"> {/* Add Link to home page with a back arrow */}
+      <TiArrowBack size={40}/>
+      </Link>
+      </div>
+      
       <div className="profile-frame">
         <div className="profile-pic">
           <img
