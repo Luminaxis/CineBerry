@@ -5,24 +5,26 @@ import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import logo from "../assets/CineBerry-logo.png";
 
-const picLink =
-  "https://cdn-icons-png.flaticon.com/128/3177/3177440.png";
+const picLink = "https://cdn-icons-png.flaticon.com/128/3177/3177440.png";
 
 export default function Home() {
   const navigate = useNavigate();
-  const [data, setData] = useState([]);
+  const [postData, setPostData] = useState([]);
+  const [clipData, setClipData] = useState([]);
   const [comment, setComment] = useState("");
   const [show, setShow] = useState(false);
   const [item, setItem] = useState(null);
   const [isPostView, setIsPostView] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  let limit = 10;
-  let skip = 0;
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
+  const [hasMoreClips, setHasMoreClips] = useState(true);
+  const limit = 10; // Load 10 posts or clips at a time
+  const skipPosts = useRef(0);
+  const skipClips = useRef(0);
 
   // Ref for tracking currently playing video with audio
   const currentVideoRef = useRef(null);
-  const currentVideoIdRef = useRef(null);
   const isAudioPlayingRef = useRef(false);
 
   // Toast functions
@@ -41,10 +43,11 @@ export default function Home() {
   useEffect(() => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isPostView]);
 
   useEffect(() => {
-    if (data.length === 0) return;
+    if ((isPostView && postData.length === 0) || (!isPostView && clipData.length === 0)) return;
+
     const options = {
       root: null,
       rootMargin: "0px",
@@ -69,7 +72,7 @@ export default function Home() {
     videos.forEach((video) => observer.observe(video));
 
     return () => observer.disconnect();
-  }, [data]);
+  }, [postData, clipData]);
 
   const fetchData = () => {
     setLoading(true);
@@ -81,45 +84,57 @@ export default function Home() {
   };
 
   const fetchPosts = () => {
-    fetch(`/allposts?limit=${limit}&skip=${skip}`, {
+    setLoading(true);
+    fetch(`/allposts?limit=${limit}&skip=${skipPosts.current}`, {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("jwt"),
       },
     })
       .then((res) => res.json())
       .then((result) => {
-        setData((prevData) => [...prevData, ...result]);
+        setPostData((prevData) => [...prevData, ...result]);
         setLoading(false);
-        setHasMore(result.length > 0);
+        setLoadingMore(false);
+        setHasMorePosts(result.length === limit);
+        skipPosts.current += limit;
       })
       .catch((err) => {
         setLoading(false);
+        setLoadingMore(false);
         console.error("Error fetching posts:", err);
       });
   };
 
   const fetchClips = () => {
-    fetch(`/allclips?limit=${limit}&skip=${skip}`, {
+    setLoading(true);
+    fetch(`/allclips?limit=${limit}&skip=${skipClips.current}`, {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("jwt"),
       },
     })
       .then((res) => res.json())
       .then((result) => {
-        setData((prevData) => [...prevData, ...result]);
+        setClipData((prevData) => [...prevData, ...result]);
         setLoading(false);
-        setHasMore(result.length > 0);
+        setLoadingMore(false);
+        setHasMoreClips(result.length === limit);
+        skipClips.current += limit;
       })
       .catch((err) => {
         setLoading(false);
+        setLoadingMore(false);
         console.error("Error fetching clips:", err);
       });
   };
 
   const handleScroll = () => {
-    if (!loading && hasMore && window.innerHeight + window.scrollY >= document.body.scrollHeight - 20) {
-      skip += limit;
-      fetchData();
+    if (!loadingMore && ((isPostView && hasMorePosts) || (!isPostView && hasMoreClips)) && window.innerHeight + window.scrollY >= document.body.scrollHeight - 20) {
+      setLoadingMore(true);
+      if (isPostView) {
+        fetchPosts();
+      } else {
+        fetchClips();
+      }
     }
   };
 
@@ -141,10 +156,14 @@ export default function Home() {
     })
       .then((res) => res.json())
       .then((result) => {
-        const updatedData = data.map((item) =>
+        const updatedData = (isPostView ? postData : clipData).map((item) =>
           item._id === result._id ? result : item
         );
-        setData(updatedData);
+        if (isPostView) {
+          setPostData(updatedData);
+        } else {
+          setClipData(updatedData);
+        }
       })
       .catch((err) => notifyA("Failed to like content"));
   };
@@ -162,10 +181,14 @@ export default function Home() {
     })
       .then((res) => res.json())
       .then((result) => {
-        const updatedData = data.map((item) =>
+        const updatedData = (isPostView ? postData : clipData).map((item) =>
           item._id === result._id ? result : item
         );
-        setData(updatedData);
+        if (isPostView) {
+          setPostData(updatedData);
+        } else {
+          setClipData(updatedData);
+        }
       })
       .catch((err) => notifyA("Failed to unlike content"));
   };
@@ -184,10 +207,14 @@ export default function Home() {
     })
       .then((res) => res.json())
       .then((result) => {
-        const updatedData = data.map((item) =>
+        const updatedData = (isPostView ? postData : clipData).map((item) =>
           item._id === result._id ? result : item
         );
-        setData(updatedData);
+        if (isPostView) {
+          setPostData(updatedData);
+        } else {
+          setClipData(updatedData);
+        }
         setComment("");
         notifyB("Comment posted successfully");
       })
@@ -205,7 +232,6 @@ export default function Home() {
       video.play().catch((err) => console.log("Failed to play:", err));
       video.muted = false;
       currentVideoRef.current = video;
-      currentVideoIdRef.current = content._id;
       isAudioPlayingRef.current = true;
     }
   };
@@ -226,20 +252,27 @@ export default function Home() {
           id="see-post-clip"
           onClick={() => {
             setIsPostView(!isPostView);
-            setData([]);
-            skip = 0;
+            if (isPostView) {
+              setClipData([]);
+              skipClips.current = 0;
+            } else {
+              setPostData([]);
+              skipPosts.current = 0;
+            }
+            fetchData();
           }}
         >
           {isPostView ? "See Clips" : "See Posts"}
         </button>
 
-        {data.map((content) => (
+        {(isPostView ? postData : clipData).map((content) => (
           <div className="card" key={content._id}>
             <div className="card-header">
               <div className="card-pic">
                 <img
                   src={content.postedBy?.Photo || picLink}
-                  alt="User Profile"
+                  alt="dp"
+                  style={{ height: "50px", width: "50px", borderRadius: "50%" }}
                 />
               </div>
               <h5>
@@ -264,7 +297,9 @@ export default function Home() {
               )}
             </div>
             <div className="card-content">
-              {content.likes.includes(JSON.parse(localStorage.getItem("user"))._id) ? (
+              {content.likes.includes(
+                JSON.parse(localStorage.getItem("user"))._id
+              ) ? (
                 <span
                   className="material-symbols-outlined material-symbols-outlined-red"
                   onClick={() => unlikeContent(content._id)}
@@ -361,8 +396,21 @@ export default function Home() {
           </div>
         )}
 
-        {loading && <p>Loading...</p>}
-        {!hasMore && <p>No more {isPostView ? "posts" : "clips"} to load.</p>}
+        {loading && (
+          <div className="loading">
+            <p>Loading...</p>
+          </div>
+        )}
+        {loadingMore && (
+          <div className="loading-more">
+            <p>Loading more...</p>
+          </div>
+        )}
+        {isPostView ? (
+          !hasMorePosts && <p>No more posts to load.</p>
+        ) : (
+          !hasMoreClips && <p>No more clips to load.</p>
+        )}
       </div>
     </>
   );
