@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const router = express.Router();
 import requireLogin from '../middleware/requireLogin.js';
 
-const CLIP = mongoose.model("CLIP")
+const CLIP = mongoose.model("CLIP");
 
 router.post('/createClip', requireLogin, async (req, res) => {
     const { description, video } = req.body;
@@ -19,7 +19,7 @@ router.post('/createClip', requireLogin, async (req, res) => {
         const result = await clip.save();
         res.json({ clip: result });
     } catch (err) {
-        console.log(err);
+        console.error('Error creating clip:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -32,14 +32,14 @@ router.get('/myclips', requireLogin, async (req, res) => {
             .sort('-createdAt');
         res.json(myclips);
     } catch (err) {
-        console.log(err);
+        console.error('Error fetching my clips:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
 router.get('/allclips', requireLogin, async (req, res) => {
-    let limit = parseInt(req.query.limit);
-    let skip = parseInt(req.query.skip);
+    let limit = parseInt(req.query.limit) || 10;
+    let skip = parseInt(req.query.skip) || 0;
     try {
         const clips = await CLIP.find()
             .populate('postedBy', '_id name Photo')
@@ -49,7 +49,7 @@ router.get('/allclips', requireLogin, async (req, res) => {
             .sort('-createdAt');
         res.json(clips);
     } catch (err) {
-        console.log(err);
+        console.error('Error fetching all clips:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -64,7 +64,7 @@ router.put('/likeClip', requireLogin, async (req, res) => {
         .populate('postedBy', '_id name Photo');
         res.json(result);
     } catch (err) {
-        console.log(err);
+        console.error('Error liking clip:', err);
         res.status(422).json({ error: 'Server error' });
     }
 });
@@ -79,7 +79,7 @@ router.put('/unlikeClip', requireLogin, async (req, res) => {
         .populate('postedBy', '_id name Photo');
         res.json(result);
     } catch (err) {
-        console.log(err);
+        console.error('Error unliking clip:', err);
         res.status(422).json({ error: 'Server error' });
     }
 });
@@ -99,7 +99,7 @@ router.put('/commentClip', requireLogin, async (req, res) => {
         .populate('postedBy', '_id name Photo');
         res.json(result);
     } catch (err) {
-        console.log(err);
+        console.error('Error commenting on clip:', err);
         res.status(422).json({ error: 'Server error' });
     }
 });
@@ -118,7 +118,7 @@ router.delete('/deleteClip/:postId', requireLogin, async (req, res) => {
             res.status(403).json({ error: 'Unauthorized' });
         }
     } catch (err) {
-        console.log(err);
+        console.error('Error deleting clip:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -130,10 +130,9 @@ router.get('/myfollowingclips', requireLogin, async (req, res) => {
             .populate('comments.postedBy', '_id name');
         res.json(clips);
     } catch (err) {
-        console.log(err);
+        console.error('Error fetching following clips:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
-
 
 export default router;

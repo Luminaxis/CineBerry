@@ -5,10 +5,9 @@ import requireLogin from '../middleware/requireLogin.js';
 const router = express.Router();
 const POST = mongoose.model('POST');
 
-// Route
 router.get('/allposts', requireLogin, async (req, res) => {
-    let limit = parseInt(req.query.limit);
-    let skip = parseInt(req.query.skip);
+    let limit = parseInt(req.query.limit) || 10;
+    let skip = parseInt(req.query.skip) || 0;
     try {
         const posts = await POST.find()
             .populate('postedBy', '_id name Photo')
@@ -18,7 +17,7 @@ router.get('/allposts', requireLogin, async (req, res) => {
             .sort('-createdAt');
         res.json(posts);
     } catch (err) {
-        console.log(err);
+        console.error('Error fetching all posts:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -37,7 +36,7 @@ router.post('/createPost', requireLogin, async (req, res) => {
         const result = await post.save();
         res.json({ post: result });
     } catch (err) {
-        console.log(err);
+        console.error('Error creating post:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -50,7 +49,7 @@ router.get('/myposts', requireLogin, async (req, res) => {
             .sort('-createdAt');
         res.json(myposts);
     } catch (err) {
-        console.log(err);
+        console.error('Error fetching my posts:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -65,7 +64,7 @@ router.put('/like', requireLogin, async (req, res) => {
         .populate('postedBy', '_id name Photo');
         res.json(result);
     } catch (err) {
-        console.log(err);
+        console.error('Error liking post:', err);
         res.status(422).json({ error: 'Server error' });
     }
 });
@@ -80,7 +79,7 @@ router.put('/unlike', requireLogin, async (req, res) => {
         .populate('postedBy', '_id name Photo');
         res.json(result);
     } catch (err) {
-        console.log(err);
+        console.error('Error unliking post:', err);
         res.status(422).json({ error: 'Server error' });
     }
 });
@@ -100,41 +99,38 @@ router.put('/comment', requireLogin, async (req, res) => {
         .populate('postedBy', '_id name Photo');
         res.json(result);
     } catch (err) {
-        console.log(err);
+        console.error('Error commenting on post:', err);
         res.status(422).json({ error: 'Server error' });
     }
 });
 
-// API to delete post
 router.delete('/deletePost/:postId', requireLogin, async (req, res) => {
     try {
-      const post = await POST.findOne({ _id: req.params.postId }).populate('postedBy', '_id');
-      if (!post) {
-        return res.status(422).json({ error: 'Post not found' });
-      }
-  
-      if (post.postedBy._id.toString() === req.user._id.toString()) {
-        await post.deleteOne();
-        res.json({ message: 'Successfully deleted' });
-      } else {
-        res.status(403).json({ error: 'Unauthorized' });
-      }
-    } catch (err) {
-      console.log(err);
-      res.status(500).json({ error: 'Server error' });
-    }
-  });
-  
+        const post = await POST.findOne({ _id: req.params.postId }).populate('postedBy', '_id');
+        if (!post) {
+            return res.status(422).json({ error: 'Post not found' });
+        }
 
-// To show following posts
-router.get('/myfollwingpost', requireLogin, async (req, res) => {
+        if (post.postedBy._id.toString() === req.user._id.toString()) {
+            await post.deleteOne();
+            res.json({ message: 'Successfully deleted' });
+        } else {
+            res.status(403).json({ error: 'Unauthorized' });
+        }
+    } catch (err) {
+        console.error('Error deleting post:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+router.get('/myfollowingpost', requireLogin, async (req, res) => {
     try {
         const posts = await POST.find({ postedBy: { $in: req.user.following } })
             .populate('postedBy', '_id name')
             .populate('comments.postedBy', '_id name');
         res.json(posts);
     } catch (err) {
-        console.log(err);
+        console.error('Error fetching following posts:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
