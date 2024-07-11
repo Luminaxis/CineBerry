@@ -4,16 +4,20 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+
+// Configure dotenv
+dotenv.config();
+
+// Import models
 import './models/model.js'; // Import other models if needed
 import './models/post.js'; // Example: Importing Post model
 import './models/clip.js'; // Importing Clip model
+
+// Import routes
 import authRoutes from './routes/auth.js';
 import createPostRoutes from './routes/createPost.js';
 import userRoutes from './routes/user.js';
 import clipRoutes from './routes/clipRoutes.js'; // Import clip routes
-
-// Configure dotenv
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -26,10 +30,10 @@ app.use(cors());
 app.use(express.json());
 
 // Middleware for routes
-app.use(authRoutes);
-app.use(createPostRoutes);
-app.use(userRoutes);
-app.use(clipRoutes); // Use clip routes
+app.use('/auth', authRoutes);
+app.use('/posts', createPostRoutes);
+app.use('/users', userRoutes);
+app.use('/clips', clipRoutes); // Use clip routes
 
 const mongoURI = process.env.MONGODB_URL;
 
@@ -55,7 +59,9 @@ app.get('*', (req, res) => {
     res.sendFile(
         path.join(__dirname, './frontend/build/index.html'),
         function (err) {
-            res.status(500).send(err);
+            if (err) {
+                res.status(500).send(err);
+            }
         }
     );
 });
